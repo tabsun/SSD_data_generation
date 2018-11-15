@@ -1,0 +1,20 @@
+<annotation>
+	<folder>Watermark</folder>
+	<filename>000005.png</filename>
+	<source>
+		<database>The Watermark Detection Database</database>
+		<annotation>Annotation</annotation>
+		<image>flickr</image>
+		<flickrid>0</flickrid>
+	</source>
+	<owner>
+		<flickrid>zuiyou</flickrid>
+		<name>?</name>
+	</owner>
+	<size>
+		<width>500</width>
+		<height>375</height>
+		<depth>3</depth>
+	</size>
+	<segmented>0</segmented>
+</annotation>

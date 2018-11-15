@@ -3,13 +3,13 @@ import os
 import json
 import random
 import requests
-import urllib2
 import hashlib
 import socket
 import xml.etree.ElementTree as ET 
 
 multi_rate = 0.1
-sample_num = 1000
+blur_possibility = 0.8
+sample_num = 500
 scales = [0.4,  0.6,  0.8, 1.0, 1.5,  2.0]
 props  = [0.03, 0.07, 0.1, 0.6, 0.1, 0.1]
 
@@ -111,13 +111,29 @@ def generate_image_with_wm(image, existed_infos, added_image, wm_type):
                     image[y+py,x+px,:] = a_image[y,x,:]
                 else:
                     image[y+py,x+px,:] = a_image[y,x,:-1]
+
+    # blurry operation
+    if random.random() < blur_possibility:
+        dx = cv2.convertScaleAbs(cv2.Sobel(mask, cv2.CV_16S, 0, 1))
+        dy = cv2.convertScaleAbs(cv2.Sobel(mask, cv2.CV_16S, 1, 0))
+        
+        blur_mask = cv2.addWeighted(dx, 0.5, dy, 0.5, 0)
+        blur_mask_bin = blur_mask.copy()
+        cv2.normalize(blur_mask, blur_mask_bin, 0, 255, cv2.NORM_MINMAX)
+        
+        blur_image = cv2.GaussianBlur(image, (5,5), 0)
+        for y in range(h):
+            for x in range(w):
+                if(blur_mask_bin[y,x] > 127):
+                    image[y+py,x+px,:] = blur_image[y,x,:]
+        
     return True, image, [wm_type, py, py+h, px, px+w]
     
 if __name__ == '__main__':
     count = 0
     # Get all watermark transparent images
     wm_images = {}
-    watermark_images_dir = "./added_watermarks"
+    watermark_images_dir = "../added_watermarks"
     for fname in os.listdir(watermark_images_dir):
         if fname.endswith('.png'):
             wm_type = fname.split("_")[0]
@@ -128,7 +144,7 @@ if __name__ == '__main__':
                 wm_images[wm_type] = [image]
     # Get all neg images
     fpaths = []
-    neg_images_dir = "./neg_images"
+    neg_images_dir = "../neg_images"
     for fname in os.listdir(neg_images_dir):
         if fname.endswith('.png'):
             fpaths.append(os.path.join(neg_images_dir, fname))
@@ -173,9 +189,9 @@ if __name__ == '__main__':
                     infos.append(info)
                     accum[another_wm_type] += 1
             
-            image_path = os.path.join("./generated_data/images/%05d.png" % count)
+            image_path = os.path.join("./generated_images/images/%05d.png" % count)
             cv2.imwrite(image_path, image)
-            anno_path = os.path.join("./generated_data/annotations/%05d.xml" % count)
+            anno_path = os.path.join("./generated_images/annotations/%05d.xml" % count)
             write_xml(anno_path, "%05d.png"%count, image, infos)
             count += 1
-            print count
+            print(count)
